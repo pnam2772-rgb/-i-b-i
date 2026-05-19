@@ -6,35 +6,33 @@ import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../theme/colors';
-import { useAppSettings } from '../context/AppSettingsContext';
 
-// Hệ Thống Cảnh Giới
+// Snap Carousel Configuration
+const ITEM_WIDTH = 140;
+const ITEM_SPACING = 20;
+const TOTAL_ITEM_WIDTH = ITEM_WIDTH + ITEM_SPACING;
+
+// Hệ Thống Cảnh Giới (Bản Mở Rộng)
 const CULTIVATION_STAGES = [
-  { days: 1, name: 'Tạp Dịch Đệ Tử', desc: 'Vừa bước chân vào sơn môn, làm củi nước' },
-  { days: 3, name: 'Ngoại Môn Đệ Tử', desc: 'Bắt đầu học được chút da lông' },
-  { days: 7, name: 'Luyện Khí Kỳ', desc: 'Cảm nhận được linh khí trời đất' },
-  { days: 9, name: 'Trúc Cơ Kỳ', desc: 'Xây dựng nền tảng đạo cơ vững chắc' },
-  { days: 11, name: 'Kết Đan Kỳ', desc: 'Ngưng tụ chân nguyên' },
-  { days: 13, name: 'Kim Đan Kỳ', desc: 'Đan thành không tì vết' },
-  { days: 15, name: 'Nguyên Anh Kỳ', desc: 'Phá đan thành anh, thọ nguyên tăng vọt' },
-  { days: 17, name: 'Hóa Thần Kỳ', desc: 'Thần thức xuất thể, thao túng thiên địa' },
-  { days: 19, name: 'Luyện Hư Kỳ', desc: 'Cảm ngộ không gian' },
-  { days: 21, name: 'Hợp Thể Kỳ', desc: 'Nhục thân và thần hồn hợp nhất' },
-  { days: 23, name: 'Đại Thừa Kỳ', desc: 'Đỉnh phong của nhân giới' },
-  { days: 30, name: 'Độ Kiếp Kỳ', desc: 'Chuẩn bị nghênh đón thiên lôi' },
-  { days: 60, name: 'Địa Tiên', desc: 'Độ kiếp thành công, nán lại trần gian' },
-  { days: 90, name: 'Thiên Tiên', desc: 'Phi thăng tiên giới' },
-  { days: 999, name: 'Vô Thượng Tiên Đế', desc: 'Độc tôn vạn giới, không còn tâm ma' },
+  { days: 1, name: 'Tạp Dịch Đệ Tử' },
+  { days: 3, name: 'Ngoại Môn Đệ Tử' },
+  { days: 7, name: 'Nội Môn Đệ Tử' },
+  { days: 9, name: 'Luyện Khí Kỳ' },
+  { days: 11, name: 'Trúc Cơ Kỳ' },
+  { days: 13, name: 'Kết Đan Kỳ' },
+  { days: 15, name: 'Kim Đan Kỳ' },
+  { days: 17, name: 'Nguyên Anh Kỳ' },
+  { days: 19, name: 'Hóa Thần Kỳ' },
+  { days: 21, name: 'Luyện Hư Kỳ' },
+  { days: 23, name: 'Hợp Thể Kỳ' },
+  { days: 30, name: 'Đại Thừa Kỳ (1 tháng)' },
+  { days: 45, name: 'Độ Kiếp Kỳ (45 ngày)' },
+  { days: 60, name: 'Địa Tiên (2 tháng)' },
+  { days: 90, name: 'Thiên Tiên (3 tháng)' },
+  { days: 180, name: 'Tiên Tôn (6 tháng)' },
+  { days: 365, name: 'Tiên Đế (1 năm)' },
+  { days: 999, name: 'Hồng Trần Tiên / Đạo Tổ' },
 ];
-
-// Snap Carousel Configuration (Dynamic - Responsive)
-const getCarouselConfig = (windowWidth) => {
-  const ITEM_WIDTH = windowWidth * 0.68;
-  const ITEM_SPACING = 16;
-  const TOTAL_ITEM_WIDTH = ITEM_WIDTH + ITEM_SPACING;
-  
-  return { ITEM_WIDTH, ITEM_SPACING, TOTAL_ITEM_WIDTH };
-};
 
 const ShieldIcon = ({ dimensions }) => (
   <View style={[styles.shieldContainer, { width: dimensions.width * 0.25, height: dimensions.width * 0.25 }]}>
@@ -43,21 +41,19 @@ const ShieldIcon = ({ dimensions }) => (
   </View>
 );
 
-const CultivationCard = ({ days, name, desc, animatedIndex, index, ITEM_WIDTH, dimensions, itemSpacing }) => {
+const CultivationCard = ({ days, name, animatedIndex, index }) => {
   // Interpolate scale và opacity dựa vào vị trí thẻ
   const scale = animatedIndex.interpolate({
     inputRange: [index - 1, index, index + 1],
-    outputRange: [0.85, 1, 0.85],
+    outputRange: [0.8, 1, 0.8],
     extrapolate: 'clamp',
   });
 
   const opacity = animatedIndex.interpolate({
     inputRange: [index - 1, index, index + 1],
-    outputRange: [0.6, 1, 0.6],
+    outputRange: [0.4, 1, 0.4],
     extrapolate: 'clamp',
   });
-
-  const daysFontSize = dimensions.width * 0.08;
 
   return (
     <Animated.View
@@ -65,9 +61,9 @@ const CultivationCard = ({ days, name, desc, animatedIndex, index, ITEM_WIDTH, d
         styles.animatedCardContainer,
         {
           width: ITEM_WIDTH,
+          marginRight: ITEM_SPACING,
           transform: [{ scale }],
           opacity,
-          marginHorizontal: itemSpacing / 2,
         },
       ]}
     >
@@ -80,36 +76,11 @@ const CultivationCard = ({ days, name, desc, animatedIndex, index, ITEM_WIDTH, d
           },
         ]}
       >
-        <View style={styles.daysRow}>
-          <Text 
-            style={[
-              styles.daysText, 
-              { 
-                color: colors.gold,
-                fontSize: daysFontSize,
-              }
-            ]}
-          >
-            {days}
-          </Text>
-          <Text style={[styles.daysUnit, { color: colors.gold, fontSize: dimensions.width * 0.03 }]}>
-            ngày
-          </Text>
-        </View>
-        <Text 
-          style={[
-            styles.nameText, 
-            { 
-              color: colors.white,
-              fontSize: dimensions.width * 0.035,
-              marginTop: 4,
-            }
-          ]}
-        >
-          {name}
+        <Text style={[styles.daysText, { color: colors.gold }]}>
+          {days}
         </Text>
-        <Text style={[styles.descText, { fontSize: dimensions.width * 0.028 }]}> 
-          {desc}
+        <Text style={[styles.nameText, { color: colors.grayText }]}>
+          {name}
         </Text>
       </View>
     </Animated.View>
@@ -134,19 +105,19 @@ const NavigationArrow = ({ direction, onPress, isDisabled }) => (
   </TouchableOpacity>
 );
 
-const BottomNavBar = ({ dimensions, copy }) => (
+const BottomNavBar = ({ dimensions }) => (
   <View style={[styles.bottomNav, { height: dimensions.height * 0.08 }]}>
     <TouchableOpacity style={styles.navItem}>
       <MaterialIcons name="home" size={dimensions.width * 0.07} color={colors.gold} />
-      <Text style={[styles.navLabel, { fontSize: dimensions.width * 0.03 }]}>{copy.tabHome}</Text>
+      <Text style={[styles.navLabel, { fontSize: dimensions.width * 0.03 }]}>Luyện Công</Text>
     </TouchableOpacity>
     <TouchableOpacity style={styles.navItem}>
       <MaterialIcons name="bar-chart" size={dimensions.width * 0.07} color={colors.grayText} />
-      <Text style={[styles.navLabel, { fontSize: dimensions.width * 0.03, color: colors.grayText }]}>{copy.tabLeaderboard}</Text>
+      <Text style={[styles.navLabel, { fontSize: dimensions.width * 0.03, color: colors.grayText }]}>Bảng Phong Thần</Text>
     </TouchableOpacity>
     <TouchableOpacity style={styles.navItem}>
       <MaterialIcons name="settings" size={dimensions.width * 0.07} color={colors.grayText} />
-      <Text style={[styles.navLabel, { fontSize: dimensions.width * 0.03, color: colors.grayText }]}>{copy.tabSettings}</Text>
+      <Text style={[styles.navLabel, { fontSize: dimensions.width * 0.03, color: colors.grayText }]}>Công Pháp</Text>
     </TouchableOpacity>
   </View>
 );
@@ -154,11 +125,7 @@ const BottomNavBar = ({ dimensions, copy }) => (
 export default function OnboardingScreen() {
   const dimensions = useWindowDimensions();
   const { navigate } = useNavigation();
-  const { copy } = useAppSettings();
   const [selectedIndex, setSelectedIndex] = useState(9);
-  
-  // Get responsive carousel config
-  const { ITEM_WIDTH, ITEM_SPACING, TOTAL_ITEM_WIDTH } = getCarouselConfig(dimensions.width);
   
   // Animated Values
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -225,12 +192,8 @@ export default function OnboardingScreen() {
     <CultivationCard
       days={item.days}
       name={item.name}
-      desc={item.desc}
       animatedIndex={animatedIndex}
       index={index}
-      ITEM_WIDTH={ITEM_WIDTH}
-      dimensions={dimensions}
-      itemSpacing={ITEM_SPACING}
     />
   );
 
@@ -248,33 +211,28 @@ export default function OnboardingScreen() {
       </View>
 
       {/* Main Content - Fixed View (No Scroll) */}
-      <View style={styles.mainContent}>
-        <View style={[styles.container, { paddingHorizontal: dimensions.width * 0.08 }]}> 
-          {/* Section 1: Logo + Title */}
-          <View style={[styles.section, { marginTop: dimensions.height * 0.03 }]}>
-            <ShieldIcon dimensions={dimensions} />
-            <Text style={[styles.title, { fontSize: dimensions.width * 0.07, marginTop: dimensions.height * 0.025 }]}>
-              {copy.onboardingTitle}
-            </Text>
-          </View>
-
-          {/* Section 2: Subtitle */}
-          <View style={styles.section}>
-            <Text style={[styles.subtitle, { fontSize: 16, lineHeight: 26 }]}>
-              {copy.onboardingSubtitle}
-            </Text>
-          </View>
-
-          {/* Section 3 Label */}
-          <View style={styles.section}>
-            <Text style={[styles.goalLabel, { fontSize: dimensions.width * 0.035, marginBottom: dimensions.height * 0.01 }]}> 
-              {copy.onboardingChooseStage}
-            </Text>
-          </View>
+      <View style={[styles.container, { paddingHorizontal: dimensions.width * 0.08 }]}>
+        {/* Section 1: Logo + Title */}
+        <View style={styles.section}>
+          <ShieldIcon dimensions={dimensions} />
+          <Text style={[styles.title, { fontSize: dimensions.width * 0.07, marginTop: dimensions.height * 0.045 }]}>
+            CƯƠNG LĨNH TU ĐẠO
+          </Text>
         </View>
 
-        {/* Carousel Full Width - Outside Container Padding */}
-        <View style={styles.carouselSection}>
+        {/* Section 2: Subtitle - ENLARGED */}
+        <View style={styles.section}>
+          <Text style={[styles.subtitle, { fontSize: 18, lineHeight: 28 }]}>
+            Hồng trần vạn trượng, một tay buông bỏ, nghịch thiên cải mệnh.
+          </Text>
+        </View>
+
+        {/* Section 3: Cultivation Stages Selection - SNAP CAROUSEL */}
+        <View style={styles.section}>
+          <Text style={[styles.goalLabel, { fontSize: dimensions.width * 0.036, marginBottom: dimensions.height * 0.02 }]}>
+            Chọn cảnh giới tu luyện:
+          </Text>
+          
           <View style={styles.carouselContainer}>
             {/* Left Arrow */}
             <NavigationArrow
@@ -293,7 +251,6 @@ export default function OnboardingScreen() {
               showsHorizontalScrollIndicator={false}
               scrollEnabled={true}
               scrollEventThrottle={16}
-              style={{ width: '100%' }}
               onScroll={Animated.event(
                 [{ nativeEvent: { contentOffset: { x: scrollX } } }],
                 { useNativeDriver: false }
@@ -304,7 +261,8 @@ export default function OnboardingScreen() {
               contentContainerStyle={[
                 styles.scrollContent,
                 {
-                  paddingHorizontal: Math.max(0, (dimensions.width - ITEM_WIDTH) / 2 - ITEM_SPACING / 2),
+                  paddingLeft: (dimensions.width - ITEM_WIDTH) / 2,
+                  paddingRight: (dimensions.width - ITEM_WIDTH) / 2,
                 },
               ]}
             />
@@ -318,29 +276,26 @@ export default function OnboardingScreen() {
           </View>
         </View>
 
-        {/* Resume Padded Container */}
-        <View style={[styles.container, { paddingHorizontal: dimensions.width * 0.08 }]}> 
-          {/* Section 4: Start Button */}
-          <View style={styles.section}>
-            <TouchableOpacity
-              style={[styles.startButton, { paddingVertical: dimensions.height * 0.02 }]}
-              onPress={handleStartJourney}
-            >
-              <Text style={[styles.startButtonText, { fontSize: dimensions.width * 0.04 }]}>{copy.onboardingStartButton}</Text>
-            </TouchableOpacity>
-          </View>
+        {/* Section 4: Start Button */}
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={[styles.startButton, { paddingVertical: dimensions.height * 0.028 }]}
+            onPress={handleStartJourney}
+          >
+            <Text style={[styles.startButtonText, { fontSize: dimensions.width * 0.042 }]}>BƯỚC VÀO LUÂN HỒI</Text>
+          </TouchableOpacity>
+        </View>
 
-          {/* Section 5: Warning Text */}
-          <View style={styles.section}>
-            <Text style={[styles.warningText, { lineHeight: dimensions.width * 0.046 }]}> 
-              Bút sa gà chết. Một khi đã chọn con đường này, nếu tâm ma trỗi dậy làm loạn, vạn kiếp bất phục.
-            </Text>
-          </View>
+        {/* Section 5: Warning Text */}
+        <View style={styles.section}>
+          <Text style={[styles.warningText, { fontSize: dimensions.width * 0.03, lineHeight: dimensions.width * 0.045 }]}>
+            Bút sa gà chết. Một khi đã chọn con đường này, nếu tâm ma trỗi dậy làm loạn, vạn kiếp bất phục.
+          </Text>
         </View>
       </View>
 
       {/* Bottom Navigation */}
-      <BottomNavBar dimensions={dimensions} copy={copy} />
+      <BottomNavBar dimensions={dimensions} />
     </SafeAreaView>
   );
 }
@@ -352,33 +307,19 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: colors.gold,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  mainContent: {
+  container: {
     flex: 1,
     backgroundColor: colors.darkNavy,
+    justifyContent: 'space-around',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  container: {
-    backgroundColor: colors.darkNavy,
-    alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 16,
   },
   section: {
     width: '100%',
     alignItems: 'center',
-    marginVertical: 4,
-  },
-  carouselSection: {
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 12,
-    marginBottom: 12,
-    marginHorizontal: 0,
-    paddingHorizontal: 0,
   },
   headerTitle: {
     fontWeight: 'bold',
@@ -412,7 +353,6 @@ const styles = StyleSheet.create({
     color: colors.gold,
     textAlign: 'center',
     marginTop: 0,
-    letterSpacing: 1,
   },
   subtitle: {
     color: colors.grayText,
@@ -424,17 +364,14 @@ const styles = StyleSheet.create({
     color: colors.gold,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 4,
   },
   carouselContainer: {
     width: '100%',
-    height: 160,
+    height: 140,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    marginHorizontal: 0,
-    paddingHorizontal: 0,
   },
   scrollContent: {
     gap: 0,
@@ -444,40 +381,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cultivationCard: {
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 2,
     paddingVertical: 12,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 135,
-    width: '100%',
+    height: 110,
   },
   daysText: {
     fontWeight: 'bold',
+    fontSize: 16,
     marginBottom: 6,
-  },
-  daysRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 6,
-  },
-  daysUnit: {
-    fontWeight: '600',
-    paddingBottom: 6,
   },
   nameText: {
     fontWeight: '500',
+    fontSize: 10,
     textAlign: 'center',
-    lineHeight: 20,
-    flexWrap: 'wrap',
-    numberOfLines: undefined,
-  },
-  descText: {
-    color: colors.grayText,
-    textAlign: 'center',
-    marginTop: 6,
-    lineHeight: 18,
+    lineHeight: 13,
   },
   arrowButton: {
     position: 'absolute',
@@ -488,13 +409,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 22,
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    padding: 10,
   },
   arrowLeft: {
-    left: 0,
+    left: 8,
   },
   arrowRight: {
-    right: 0,
+    right: 8,
   },
   startButton: {
     width: '90%',
@@ -502,10 +422,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.gold,
-    marginTop: 4,
-    marginBottom: 16,
   },
   startButtonText: {
     fontWeight: 'bold',
@@ -517,7 +435,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     paddingHorizontal: 12,
-    fontSize: 14,
   },
   bottomNav: {
     flexDirection: 'row',

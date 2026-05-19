@@ -5,23 +5,9 @@ import { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors } from '../theme/colors';
-import { ENABLE_PUSH_NOTIFICATIONS } from '../constants/appConfig';
-import { getFailMessage } from '../constants/challenges';
-import { getCurrentStage, getNearestRewardDay } from '../utils/cultivation';
-import { registerForPushNotificationsAsync } from '../services/notifications';
-import { savePushToken, upsertLeaderboardEntry } from '../services/leaderboard';
-import { useAppSettings } from '../context/AppSettingsContext';
-import {
-  getLastChallengeDay,
-  getLastRewardDay,
-  setLastChallengeDay,
-  setLastRewardDay,
-  triggerChallenge,
-  triggerReward,
-} from '../services/challengeFlow';
+import { colors } from '../constants/colors';
 
-const CircularTimer = ({ dimensions, elapsedSeconds, label }) => {
+const CircularTimer = ({ dimensions, elapsedSeconds }) => {
   const formatTime = (seconds) => {
     const days = Math.floor(seconds / 86400);
     const hours = Math.floor((seconds % 86400) / 3600);
@@ -62,7 +48,7 @@ const CircularTimer = ({ dimensions, elapsedSeconds, label }) => {
 
       <View style={styles.timerContent}>
         <Text style={[styles.timerDays, { fontSize: dimensions.width * 0.12 }]}>{time.days}</Text>
-        <Text style={[styles.timerLabel, { fontSize: dimensions.width * 0.035 }]}>{label}</Text>
+        <Text style={[styles.timerLabel, { fontSize: dimensions.width * 0.035 }]}>NGÀY</Text>
         <Text style={[styles.timerTime, { fontSize: dimensions.width * 0.045 }]}>
           {time.hours}:{time.minutes}:{time.seconds}
         </Text>
@@ -71,21 +57,36 @@ const CircularTimer = ({ dimensions, elapsedSeconds, label }) => {
   );
 };
 
+const BottomNavBar = ({ dimensions }) => (
+  <View style={[styles.bottomNav, { height: dimensions.height * 0.08 }]}>
+    <TouchableOpacity style={styles.navItem}>
+      <MaterialIcons name="home" size={dimensions.width * 0.07} color="#E6B800" />
+      <Text style={[styles.navLabel, { fontSize: dimensions.width * 0.03 }]}>Luyện Công</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.navItem}>
+      <MaterialIcons name="bar-chart" size={dimensions.width * 0.07} color="#D5D0C4" />
+      <Text style={[styles.navLabel, { fontSize: dimensions.width * 0.03, color: '#D5D0C4' }]}>Bảng Phong Thần</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.navItem}>
+      <MaterialIcons name="settings" size={dimensions.width * 0.07} color="#D5D0C4" />
+      <Text style={[styles.navLabel, { fontSize: dimensions.width * 0.03, color: '#D5D0C4' }]}>Công Pháp</Text>
+    </TouchableOpacity>
+  </View>
+);
+
 export default function HomeScreen() {
   const dimensions = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const { copy, userId, displayName, challengeTone, notificationsEnabled, isExpoGo } = useAppSettings();
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [startTime, setStartTime] = useState(null);
   const [targetDays, setTargetDays] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
-  const [lastRewardDay, setLastRewardDayState] = useState(0);
-  const [lastChallengeDay, setLastChallengeDayState] = useState(0);
   const [modalContent, setModalContent] = useState({
     title: '',
-    titleColor: colors.gold,
+    titleColor: '#E6B800',
     content: '',
+    backgroundColor: '#1A1953',
   });
   
   const tabBarHeight = 80;
@@ -93,39 +94,10 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (Platform.OS === 'android') {
-      StatusBar.setBackgroundColor(colors.gold);
+      StatusBar.setBackgroundColor('#E6B800');
       StatusBar.setBarStyle('dark-content');
     }
   }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const bootstrapUser = async () => {
-      const storedRewardDay = await getLastRewardDay();
-      const storedChallengeDay = await getLastChallengeDay();
-
-      if (!isMounted) return;
-
-      setLastRewardDayState(storedRewardDay);
-      setLastChallengeDayState(storedChallengeDay);
-
-      if (ENABLE_PUSH_NOTIFICATIONS && notificationsEnabled && userId && !isExpoGo) {
-        const token = await registerForPushNotificationsAsync();
-        if (token) {
-          await savePushToken({ userId, token, platform: Platform.OS });
-        }
-      }
-    };
-
-    if (userId) {
-      bootstrapUser();
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [userId]);
 
   // Load startTime from AsyncStorage and setup interval
   useEffect(() => {
@@ -167,43 +139,6 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, [startTime]);
 
-  useEffect(() => {
-    if (startTime === null) return;
-
-    const checkMilestones = async () => {
-      const elapsedDays = Math.floor(elapsedSeconds / 86400);
-      if (elapsedDays <= 0) return;
-
-      const rewardDay = getNearestRewardDay(elapsedDays);
-      if (rewardDay > lastRewardDay) {
-        if (notificationsEnabled) {
-          await triggerReward({ day: rewardDay, tone: challengeTone });
-        }
-
-        await setLastRewardDay(rewardDay);
-        setLastRewardDayState(rewardDay);
-
-        const stage = getCurrentStage(rewardDay);
-        await upsertLeaderboardEntry({
-          userId,
-          displayName,
-          days: rewardDay,
-          levelName: stage?.name || '',
-        });
-      }
-
-      if (elapsedDays >= 8 && lastChallengeDay < 8) {
-        if (notificationsEnabled) {
-          await triggerChallenge({ day: 8, tone: challengeTone });
-        }
-        await setLastChallengeDay(8);
-        setLastChallengeDayState(8);
-      }
-    };
-
-    checkMilestones();
-  }, [elapsedSeconds, lastRewardDay, lastChallengeDay, startTime, userId, displayName]);
-
   // Dev tools - fast forward 1 day
   const handleFastForward1Day = async () => {
     try {
@@ -237,13 +172,29 @@ export default function HomeScreen() {
   // Handle Failure - Show shame modal based on elapsed time
   const handleFailure = () => {
     const elapsedDays = Math.floor(elapsedSeconds / 86400);
-    const failCopy = getFailMessage(elapsedDays, challengeTone);
-    const titleColor = elapsedDays < 3 ? colors.redWarning : colors.gold;
+    let title = '';
+    let titleColor = '#E6B800';
+    let content = '';
+
+    if (elapsedDays < 3) {
+      title = 'PHẾ VẬT!';
+      titleColor = '#C41E3A'; // Red
+      content = 'Mới tu luyện được vài canh giờ mà đã đầu hàng dục vọng? Đạo tâm của ngươi yếu nhớt đến mức này sao?';
+    } else if (elapsedDays < 7) {
+      title = 'ĐẠO TÂM LUNG LAY!';
+      titleColor = '#FF8C42'; // Orange
+      content = 'Sắp chạm tới ngưỡng cửa đột phá mà lại tẩu hỏa nhập ma. Thật đáng tiếc!';
+    } else {
+      title = 'KIẾP NẠN KHÓ TRÁNH!';
+      titleColor = '#C41E3A'; // Red
+      content = 'Trúc Cơ chưa vững đã đòi hái hoa bắt bướm. Rớt đài! Bọn ở Bảng Phong Thần đang cười vào mặt ngươi kìa.';
+    }
 
     setModalContent({
-      title: failCopy.title,
+      title,
       titleColor,
-      content: failCopy.body,
+      content,
+      backgroundColor: '#1A1953',
     });
     setModalVisible(true);
   };
@@ -253,10 +204,6 @@ export default function HomeScreen() {
     try {
       await AsyncStorage.removeItem('startTime');
       await AsyncStorage.removeItem('targetDays');
-      await setLastRewardDay(0);
-      await setLastChallengeDay(0);
-      setLastRewardDayState(0);
-      setLastChallengeDayState(0);
       setModalVisible(false);
       navigation.replace('Onboarding');
     } catch (error) {
@@ -264,15 +211,12 @@ export default function HomeScreen() {
     }
   };
 
-  const elapsedDays = Math.floor(elapsedSeconds / 86400);
-  const currentStage = getCurrentStage(elapsedDays);
-
   return (
-    <View style={{ flex: 1, backgroundColor: colors.darkNavy }}>
+    <View style={{ flex: 1, backgroundColor: '#0F1419' }}>
       <ExpoStatusBar style="dark" />
       {/* Header Bar - Thanh DEV with Dev Tools */}
       <View style={[styles.header, { paddingTop: statusBarHeight }]}>
-        <Text style={[styles.headerTitle, { fontSize: dimensions.width * 0.04 }]}>{copy.homeHeaderLabel}</Text>
+        <Text style={[styles.headerTitle, { fontSize: dimensions.width * 0.04 }]}>[DỊCH CHUYỂN THỜI GIAN]</Text>
         <View style={styles.headerTabs}>
           <TouchableOpacity 
             style={styles.headerTab}
@@ -303,30 +247,24 @@ export default function HomeScreen() {
         {/* Top Section - Level Info */}
         <View style={styles.topSection}>
           <View style={styles.levelInfo}>
-            <Text style={[styles.levelLabel, { fontSize: dimensions.width * 0.03 }]}>{copy.homeLevelLabel}</Text>
+            <Text style={[styles.levelLabel, { fontSize: dimensions.width * 0.03 }]}>Cảnh giới hiện tại</Text>
             <View style={styles.levelRow}>
-              <MaterialIcons name="eco" size={dimensions.width * 0.06} color={colors.gold} />
-              <Text style={[styles.levelName, { fontSize: dimensions.width * 0.042 }]}>
-                {currentStage?.name || copy.homeStartingLevel}
-              </Text>
+              <MaterialIcons name="eco" size={dimensions.width * 0.06} color="#E6B800" />
+              <Text style={[styles.levelName, { fontSize: dimensions.width * 0.042 }]}>PHÀM NHÂN TỤC TỬ</Text>
             </View>
           </View>
           <TouchableOpacity style={[styles.avatarButton, { width: dimensions.width * 0.15, height: dimensions.width * 0.15 }]}>
-            <MaterialIcons name="person" size={dimensions.width * 0.08} color={colors.gold} />
+            <MaterialIcons name="person" size={dimensions.width * 0.08} color="#E6B800" />
           </TouchableOpacity>
         </View>
 
         {/* Central Timer */}
-        <CircularTimer
-          dimensions={dimensions}
-          elapsedSeconds={elapsedSeconds}
-          label={copy.homeTimerLabel}
-        />
+        <CircularTimer dimensions={dimensions} elapsedSeconds={elapsedSeconds} />
 
         {/* Quote Section */}
         <View style={[styles.quoteContainer, { paddingHorizontal: dimensions.width * 0.04, paddingVertical: dimensions.height * 0.02 }]}>
           <Text style={[styles.quoteText, { fontSize: dimensions.width * 0.032, lineHeight: dimensions.width * 0.048 }]}>
-            {copy.homeQuote}
+            "Nghịch thiên nhi hành, tu luyện tâm tính mới là đại đạo."
           </Text>
         </View>
 
@@ -335,11 +273,12 @@ export default function HomeScreen() {
           style={[styles.fallenButton, { paddingVertical: dimensions.height * 0.022 }]}
           onPress={handleFailure}
         >
-          <Text style={[styles.fallenButtonText, { fontSize: dimensions.width * 0.038 }]}>
-            {copy.homeFailButton}
-          </Text>
+          <Text style={[styles.fallenButtonText, { fontSize: dimensions.width * 0.038 }]}>TÂM MA TRỖI DẬY (THẤT BẠI)</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Bottom Navigation */}
+      <BottomNavBar dimensions={dimensions} />
 
       {/* Shame Modal */}
       <Modal
@@ -366,7 +305,7 @@ export default function HomeScreen() {
               onPress={handleReset}
             >
               <Text style={[styles.resetButtonText, { fontSize: dimensions.width * 0.038 }]}>
-                {copy.homeResetButton}
+                Nhục nhã bấm làm lại
               </Text>
             </TouchableOpacity>
           </View>
@@ -378,13 +317,13 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: colors.gold,
+    backgroundColor: '#E6B800',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   headerTitle: {
     fontWeight: 'bold',
-    color: colors.darkNavy,
+    color: '#0F1419',
     marginBottom: 8,
   },
   headerTabs: {
@@ -393,7 +332,7 @@ const styles = StyleSheet.create({
   },
   headerTab: {
     fontWeight: '600',
-    color: colors.darkNavy,
+    color: '#0F1419',
     backgroundColor: 'rgba(0, 0, 0, 0.12)',
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -409,7 +348,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   levelLabel: {
-    color: colors.grayText,
+    color: '#D5D0C4',
     marginBottom: 4,
   },
   levelRow: {
@@ -419,15 +358,15 @@ const styles = StyleSheet.create({
   },
   levelName: {
     fontWeight: 'bold',
-    color: colors.gold,
+    color: '#E6B800',
   },
   avatarButton: {
     borderRadius: 30,
     borderWidth: 2,
-    borderColor: colors.gold,
+    borderColor: '#E6B800',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 191, 165, 0.12)',
+    backgroundColor: 'rgba(230, 184, 0, 0.12)',
   },
   timerContainer: {
     justifyContent: 'center',
@@ -436,9 +375,9 @@ const styles = StyleSheet.create({
   },
   circleBackground: {
     position: 'absolute',
-    backgroundColor: 'rgba(222, 195, 132, 0.1)',
+    backgroundColor: 'rgba(230, 184, 0, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(222, 195, 132, 0.2)',
+    borderColor: 'rgba(230, 184, 0, 0.2)',
   },
   progressCircle: {
     position: 'absolute',
@@ -453,42 +392,59 @@ const styles = StyleSheet.create({
   },
   timerDays: {
     fontWeight: 'bold',
-    color: colors.gold,
+    color: '#E6B800',
   },
   timerLabel: {
-    color: colors.grayText,
+    color: '#D5D0C4',
     marginTop: 4,
     letterSpacing: 2,
   },
   timerTime: {
-    color: colors.grayText,
+    color: '#D5D0C4',
     marginTop: 8,
     fontWeight: '500',
   },
   quoteContainer: {
     width: '100%',
-    backgroundColor: 'rgba(222, 195, 132, 0.08)',
+    backgroundColor: 'rgba(230, 184, 0, 0.08)',
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: colors.gold,
+    borderLeftColor: '#E6B800',
   },
   quoteText: {
-    color: colors.grayText,
+    color: '#D5D0C4',
     fontStyle: 'italic',
     textAlign: 'center',
   },
   fallenButton: {
     width: '100%',
-    backgroundColor: colors.redWarning,
+    backgroundColor: '#C41E3A',
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: colors.goldDim,
+    borderColor: '#8B1428',
   },
   fallenButtonText: {
     fontWeight: 'bold',
-    color: colors.white,
+    color: '#FFFFFF',
     letterSpacing: 1,
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    backgroundColor: '#0A0F17',
+    borderTopColor: '#E6B800',
+    borderTopWidth: 2,
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  navItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navLabel: {
+    color: '#E6B800',
+    marginTop: 4,
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
@@ -497,13 +453,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: '#1A1953',
     borderRadius: 16,
     paddingHorizontal: 24,
     paddingVertical: 32,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: colors.gold,
+    borderColor: '#E6B800',
   },
   modalTitle: {
     fontWeight: 'bold',
@@ -511,23 +467,23 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalBody: {
-    color: colors.grayText,
+    color: '#D5D0C4',
     textAlign: 'center',
     lineHeight: 24,
     fontStyle: 'italic',
   },
   resetButton: {
     width: '100%',
-    backgroundColor: colors.white,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.grayText,
+    borderColor: '#D5D0C4',
   },
   resetButtonText: {
     fontWeight: 'bold',
-    color: colors.darkNavy,
+    color: '#0F1419',
     letterSpacing: 0.5,
   },
 });

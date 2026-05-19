@@ -1,0 +1,17 @@
+export const CULTIVATION_STAGES = [
+  { days: 1, name: 'Tạp Dịch Đệ Tử', desc: 'Vừa bước chân vào sơn môn, làm củi nước' },
+  { days: 3, name: 'Ngoại Môn Đệ Tử', desc: 'Bắt đầu học được chút da lông' },
+  { days: 7, name: 'Luyện Khí Kỳ', desc: 'Cảm nhận được linh khí trời đất' },
+  { days: 9, name: 'Trúc Cơ Kỳ', desc: 'Xây dựng nền tảng đạo cơ vững chắc' },
+  { days: 11, name: 'Kết Đan Kỳ', desc: 'Ngưng tụ chân nguyên' },
+  { days: 13, name: 'Kim Đan Kỳ', desc: 'Đan thành không tì vết' },
+  { days: 15, name: 'Nguyên Anh Kỳ', desc: 'Phá đan thành anh, thọ nguyên tăng vọt' },
+  { days: 17, name: 'Hóa Thần Kỳ', desc: 'Thần thức xuất thể, thao túng thiên địa' },
+  { days: 19, name: 'Luyện Hư Kỳ', desc: 'Cảm ngộ không gian' },
+  { days: 21, name: 'Hợp Thể Kỳ', desc: 'Nhục thân và thần hồn hợp nhất' },
+  { days: 23, name: 'Đại Thừa Kỳ', desc: 'Đỉnh phong của nhân giới' },
+  { days: 30, name: 'Độ Kiếp Kỳ', desc: 'Chuẩn bị nghênh đón thiên lôi' },
+  { days: 60, name: 'Địa Tiên', desc: 'Độ kiếp thành công, nán lại trần gian' },
+  { days: 90, name: 'Thiên Tiên', desc: 'Phi thăng tiên giới' },
+  { days: 999, name: 'Vô Thượng Tiên Đế', desc: 'Độc tôn vạn giới, không còn tâm ma' },
+];
