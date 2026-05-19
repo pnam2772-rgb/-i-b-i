@@ -9,7 +9,7 @@ import { useAppSettings } from '../context/AppSettingsContext';
 
 export default function LeaderboardScreen() {
   const dimensions = useWindowDimensions();
-  const { copy } = useAppSettings();
+  const { copy, themeKey } = useAppSettings();
   const [rankings, setRankings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -20,13 +20,22 @@ export default function LeaderboardScreen() {
     }
   }, []);
 
-  const fallbackRankings = [
-    { id: 'mock-1', rank: 1, displayName: 'Vô Thiên', days: 45, levelName: 'Hóa Thần Kỳ' },
-    { id: 'mock-2', rank: 2, displayName: 'Động Bát Quái', days: 38, levelName: 'Kim Đan Kỳ' },
-    { id: 'mock-3', rank: 3, displayName: 'Trúc Cơ Tuyệt Tuyên', days: 30, levelName: 'Trúc Cơ Kỳ' },
-    { id: 'mock-4', rank: 4, displayName: 'Tuấn Anh', days: 21, levelName: 'Luyện Khí Kỳ' },
-    { id: 'mock-5', rank: 5, displayName: 'Thành Công Giả', days: 14, levelName: 'Luyện Khí Kỳ' },
-  ];
+  const fallbackRankings =
+    themeKey === 'normal'
+      ? [
+          { id: 'mock-1', rank: 1, displayName: 'Minh', days: 45, levelName: '1 Tháng' },
+          { id: 'mock-2', rank: 2, displayName: 'Huy', days: 38, levelName: '1 Tháng' },
+          { id: 'mock-3', rank: 3, displayName: 'An', days: 30, levelName: '1 Tháng' },
+          { id: 'mock-4', rank: 4, displayName: 'Linh', days: 21, levelName: '3 Tuần' },
+          { id: 'mock-5', rank: 5, displayName: 'Tuấn', days: 14, levelName: 'Ngày 15' },
+        ]
+      : [
+          { id: 'mock-1', rank: 1, displayName: 'Vô Thiên', days: 45, levelName: 'Hóa Thần Kỳ' },
+          { id: 'mock-2', rank: 2, displayName: 'Động Bát Quái', days: 38, levelName: 'Kim Đan Kỳ' },
+          { id: 'mock-3', rank: 3, displayName: 'Trúc Cơ Tuyệt Tuyên', days: 30, levelName: 'Trúc Cơ Kỳ' },
+          { id: 'mock-4', rank: 4, displayName: 'Tuấn Anh', days: 21, levelName: 'Luyện Khí Kỳ' },
+          { id: 'mock-5', rank: 5, displayName: 'Thành Công Giả', days: 14, levelName: 'Luyện Khí Kỳ' },
+        ];
 
   useEffect(() => {
     let isMounted = true;
@@ -56,7 +65,7 @@ export default function LeaderboardScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [themeKey]);
 
   const renderRankingItem = ({ item }) => (
     <View style={[styles.rankingCard, { marginHorizontal: dimensions.width * 0.05, marginVertical: dimensions.height * 0.01 }]}>

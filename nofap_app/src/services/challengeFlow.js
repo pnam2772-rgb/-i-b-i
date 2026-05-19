@@ -25,12 +25,12 @@ export const setLastChallengeDay = async (day) => {
   await AsyncStorage.setItem(LAST_CHALLENGE_KEY, String(day));
 };
 
-export const triggerReward = async ({ day, tone }) => {
-  const message = getRewardMessage(day, tone);
+export const triggerReward = async ({ day, tone, theme }) => {
+  const message = getRewardMessage(day, theme, tone);
   if (!message) return false;
 
   await scheduleLocalNotification({
-    title: 'Thưởng cột mốc',
+    title: theme === 'normal' ? 'Nhắc tiến độ' : 'Thưởng cột mốc',
     body: message,
     data: { type: 'reward', day },
   });
@@ -42,12 +42,12 @@ export const triggerReward = async ({ day, tone }) => {
   return true;
 };
 
-export const triggerChallenge = async ({ day, tone }) => {
-  const message = getChallengeMessage(day, tone);
+export const triggerChallenge = async ({ day, tone, theme }) => {
+  const message = getChallengeMessage(day, theme, tone);
   if (!message) return false;
 
   await scheduleLocalNotification({
-    title: 'Thử thách',
+    title: theme === 'normal' ? 'Nhắc nhở' : 'Thử thách',
     body: message,
     data: { type: 'challenge', day },
   });

@@ -15,3 +15,21 @@ export const CULTIVATION_STAGES = [
   { days: 90, name: 'Thiên Tiên', desc: 'Phi thăng tiên giới' },
   { days: 999, name: 'Vô Thượng Tiên Đế', desc: 'Độc tôn vạn giới, không còn tâm ma' },
 ];
+
+export const NORMAL_STAGES = [
+  { days: 1, name: 'Ngày 1', desc: 'Bắt đầu bằng một ngày rõ ràng' },
+  { days: 3, name: 'Ngày 3', desc: 'Nhịp đầu tiên đã hình thành' },
+  { days: 7, name: 'Tuần 1', desc: 'Một tuần ổn định' },
+  { days: 9, name: 'Ngày 9', desc: 'Giữ được mạch đều' },
+  { days: 11, name: 'Ngày 11', desc: 'Tiến độ đang vững hơn' },
+  { days: 13, name: 'Ngày 13', desc: 'Tiếp tục đi đúng hướng' },
+  { days: 15, name: 'Ngày 15', desc: 'Nửa chặng đầu đã qua' },
+  { days: 17, name: 'Ngày 17', desc: 'Sự ổn định ngày càng rõ' },
+  { days: 19, name: 'Ngày 19', desc: 'Thói quen bắt đầu chắc' },
+  { days: 21, name: '3 Tuần', desc: 'Ba tuần liên tục' },
+  { days: 23, name: 'Ngày 23', desc: 'Giữ nhịp, đừng đứt quãng' },
+  { days: 30, name: '1 Tháng', desc: 'Một mốc quan trọng' },
+  { days: 60, name: '2 Tháng', desc: 'Ổn định và bền hơn' },
+  { days: 90, name: '3 Tháng', desc: 'Một giai đoạn đáng tự hào' },
+  { days: 999, name: 'Cột Mốc Dài Hạn', desc: 'Mục tiêu lớn được giữ vững' },
+];

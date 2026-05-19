@@ -75,7 +75,7 @@ export default function HomeScreen() {
   const dimensions = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const { copy, userId, displayName, challengeTone, notificationsEnabled, isExpoGo } = useAppSettings();
+  const { copy, themeKey, userId, displayName, challengeTone, notificationsEnabled, isExpoGo } = useAppSettings();
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [startTime, setStartTime] = useState(null);
   const [targetDays, setTargetDays] = useState(0);
@@ -174,16 +174,16 @@ export default function HomeScreen() {
       const elapsedDays = Math.floor(elapsedSeconds / 86400);
       if (elapsedDays <= 0) return;
 
-      const rewardDay = getNearestRewardDay(elapsedDays);
+      const rewardDay = getNearestRewardDay(elapsedDays, themeKey);
       if (rewardDay > lastRewardDay) {
         if (notificationsEnabled) {
-          await triggerReward({ day: rewardDay, tone: challengeTone });
+          await triggerReward({ day: rewardDay, tone: challengeTone, theme: themeKey });
         }
 
         await setLastRewardDay(rewardDay);
         setLastRewardDayState(rewardDay);
 
-        const stage = getCurrentStage(rewardDay);
+        const stage = getCurrentStage(rewardDay, themeKey);
         await upsertLeaderboardEntry({
           userId,
           displayName,
@@ -194,7 +194,7 @@ export default function HomeScreen() {
 
       if (elapsedDays >= 8 && lastChallengeDay < 8) {
         if (notificationsEnabled) {
-          await triggerChallenge({ day: 8, tone: challengeTone });
+          await triggerChallenge({ day: 8, tone: challengeTone, theme: themeKey });
         }
         await setLastChallengeDay(8);
         setLastChallengeDayState(8);
@@ -202,7 +202,7 @@ export default function HomeScreen() {
     };
 
     checkMilestones();
-  }, [elapsedSeconds, lastRewardDay, lastChallengeDay, startTime, userId, displayName]);
+  }, [elapsedSeconds, lastRewardDay, lastChallengeDay, startTime, userId, displayName, notificationsEnabled, challengeTone, themeKey]);
 
   // Dev tools - fast forward 1 day
   const handleFastForward1Day = async () => {
@@ -237,7 +237,7 @@ export default function HomeScreen() {
   // Handle Failure - Show shame modal based on elapsed time
   const handleFailure = () => {
     const elapsedDays = Math.floor(elapsedSeconds / 86400);
-    const failCopy = getFailMessage(elapsedDays, challengeTone);
+    const failCopy = getFailMessage(elapsedDays, themeKey, challengeTone);
     const titleColor = elapsedDays < 3 ? colors.redWarning : colors.gold;
 
     setModalContent({
@@ -265,7 +265,7 @@ export default function HomeScreen() {
   };
 
   const elapsedDays = Math.floor(elapsedSeconds / 86400);
-  const currentStage = getCurrentStage(elapsedDays);
+  const currentStage = getCurrentStage(elapsedDays, themeKey);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.darkNavy }}>
@@ -278,13 +278,13 @@ export default function HomeScreen() {
             style={styles.headerTab}
             onPress={handleFastForward1Day}
           >
-            <Text style={[{ fontSize: dimensions.width * 0.032 }]}>TUA 1 NGÀY</Text>
+            <Text style={[{ fontSize: dimensions.width * 0.032 }]}>{copy.homeFastForward1}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.headerTab}
             onPress={handleFastForward8Days}
           >
-            <Text style={[{ fontSize: dimensions.width * 0.032 }]}>TUA 8 NGÀY</Text>
+            <Text style={[{ fontSize: dimensions.width * 0.032 }]}>{copy.homeFastForward8}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -311,7 +311,10 @@ export default function HomeScreen() {
               </Text>
             </View>
           </View>
-          <TouchableOpacity style={[styles.avatarButton, { width: dimensions.width * 0.15, height: dimensions.width * 0.15 }]}>
+          <TouchableOpacity
+            style={[styles.avatarButton, { width: dimensions.width * 0.15, height: dimensions.width * 0.15 }]}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'SettingsTab' })}
+          >
             <MaterialIcons name="person" size={dimensions.width * 0.08} color={colors.gold} />
           </TouchableOpacity>
         </View>

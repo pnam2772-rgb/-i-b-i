@@ -1,4 +1,21 @@
 const REWARD_MESSAGES = {
+  normal: {
+    1: 'Bạn đã giữ được 1 ngày. Khởi đầu ổn, cứ tiếp tục.',
+    3: '3 ngày liên tiếp. Nhịp mới đang thành hình.',
+    7: '7 ngày vững vàng. Bạn đang đi đúng hướng.',
+    9: '9 ngày bền bỉ. Tiến độ đang tốt lên.',
+    11: '11 ngày ổn định. Giữ nhịp như vậy là ổn.',
+    13: '13 ngày kiên trì. Rất đáng ghi nhận.',
+    15: '15 ngày liên tục. Bạn đang làm tốt.',
+    17: '17 ngày. Cứ đều như vậy mà đi tiếp.',
+    19: '19 ngày. Bạn đã tiến gần hơn mục tiêu lớn.',
+    21: '21 ngày. Một mốc khá chắc rồi.',
+    23: '23 ngày. Thói quen mới đang bám vững hơn.',
+    30: '30 ngày tròn. Một cột mốc quan trọng.',
+    60: '60 ngày. Phần khó nhất đã bớt dần.',
+    90: '90 ngày. Đây là một thành quả rất lớn.',
+    999: '999 ngày. Bạn đã đi rất xa rồi.',
+  },
   safe: {
     1: 'Bạn đã đi được 1 ngày. Khởi đầu tốt, tiếp tục giữ nhịp.',
     3: '3 ngày liên tiếp. Thói quen mới đang hình thành.',
@@ -36,6 +53,23 @@ const REWARD_MESSAGES = {
 };
 
 const FAIL_MESSAGES = {
+  normal: [
+    {
+      maxDays: 2,
+      title: 'MỚI BẮT ĐẦU',
+      body: 'Mấy ngày đầu chưa vững là bình thường. Làm lại và giữ nhịp tốt hơn.',
+    },
+    {
+      maxDays: 6,
+      title: 'CHƯA ỔN ĐỊNH',
+      body: 'Bạn đã cố gắng rồi, chỉ là nhịp chưa đủ đều. Đừng bỏ cuộc.',
+    },
+    {
+      maxDays: 9999,
+      title: 'ĐỨT NHỊP',
+      body: 'Bạn đã đi được một đoạn, nhưng bị ngắt giữa chừng. Bắt đầu lại để mạnh hơn.',
+    },
+  ],
   safe: [
     {
       maxDays: 2,
@@ -73,6 +107,9 @@ const FAIL_MESSAGES = {
 };
 
 const CHALLENGE_MESSAGES = {
+  normal: {
+    8: 'Ngày 8: Giữ đầu óc bình tĩnh khi gặp cám dỗ nhỏ. Chỉ cần qua hôm nay là được.',
+  },
   safe: {
     8: 'Thử thách ngày 8: Giữ tâm bình thản khi gặp cám dỗ nhỏ. Bạn làm được.',
   },
@@ -81,17 +118,17 @@ const CHALLENGE_MESSAGES = {
   },
 };
 
-export const getRewardMessage = (days, tone) => {
-  const set = REWARD_MESSAGES[tone] || REWARD_MESSAGES.safe;
+export const getRewardMessage = (days, theme, tone) => {
+  const set = REWARD_MESSAGES[theme] || REWARD_MESSAGES[tone] || REWARD_MESSAGES.safe;
   return set[days] || null;
 };
 
-export const getFailMessage = (days, tone) => {
-  const set = FAIL_MESSAGES[tone] || FAIL_MESSAGES.safe;
+export const getFailMessage = (days, theme, tone) => {
+  const set = FAIL_MESSAGES[theme] || FAIL_MESSAGES[tone] || FAIL_MESSAGES.safe;
   return set.find((item) => days <= item.maxDays) || set[set.length - 1];
 };
 
-export const getChallengeMessage = (days, tone) => {
-  const set = CHALLENGE_MESSAGES[tone] || CHALLENGE_MESSAGES.safe;
+export const getChallengeMessage = (days, theme, tone) => {
+  const set = CHALLENGE_MESSAGES[theme] || CHALLENGE_MESSAGES[tone] || CHALLENGE_MESSAGES.safe;
   return set[days] || null;
 };

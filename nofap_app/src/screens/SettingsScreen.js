@@ -127,7 +127,12 @@ export default function SettingsScreen() {
               <TouchableOpacity
                 key={option.key}
                 style={[styles.themeCard, isActive && styles.themeCardActive]}
-                onPress={() => setSelectedTheme(option.key)}
+                onPress={async () => {
+                  setSelectedTheme(option.key);
+                  if (option.key !== themeKey) {
+                    await updateTheme(option.key);
+                  }
+                }}
               >
                 <View style={styles.themeHeader}>
                   <Text style={[styles.themeLabel, { fontSize: dimensions.width * 0.038 }]}>{option.label}</Text>

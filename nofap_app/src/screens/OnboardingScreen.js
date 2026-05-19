@@ -7,25 +7,7 @@ import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../theme/colors';
 import { useAppSettings } from '../context/AppSettingsContext';
-
-// Hệ Thống Cảnh Giới
-const CULTIVATION_STAGES = [
-  { days: 1, name: 'Tạp Dịch Đệ Tử', desc: 'Vừa bước chân vào sơn môn, làm củi nước' },
-  { days: 3, name: 'Ngoại Môn Đệ Tử', desc: 'Bắt đầu học được chút da lông' },
-  { days: 7, name: 'Luyện Khí Kỳ', desc: 'Cảm nhận được linh khí trời đất' },
-  { days: 9, name: 'Trúc Cơ Kỳ', desc: 'Xây dựng nền tảng đạo cơ vững chắc' },
-  { days: 11, name: 'Kết Đan Kỳ', desc: 'Ngưng tụ chân nguyên' },
-  { days: 13, name: 'Kim Đan Kỳ', desc: 'Đan thành không tì vết' },
-  { days: 15, name: 'Nguyên Anh Kỳ', desc: 'Phá đan thành anh, thọ nguyên tăng vọt' },
-  { days: 17, name: 'Hóa Thần Kỳ', desc: 'Thần thức xuất thể, thao túng thiên địa' },
-  { days: 19, name: 'Luyện Hư Kỳ', desc: 'Cảm ngộ không gian' },
-  { days: 21, name: 'Hợp Thể Kỳ', desc: 'Nhục thân và thần hồn hợp nhất' },
-  { days: 23, name: 'Đại Thừa Kỳ', desc: 'Đỉnh phong của nhân giới' },
-  { days: 30, name: 'Độ Kiếp Kỳ', desc: 'Chuẩn bị nghênh đón thiên lôi' },
-  { days: 60, name: 'Địa Tiên', desc: 'Độ kiếp thành công, nán lại trần gian' },
-  { days: 90, name: 'Thiên Tiên', desc: 'Phi thăng tiên giới' },
-  { days: 999, name: 'Vô Thượng Tiên Đế', desc: 'Độc tôn vạn giới, không còn tâm ma' },
-];
+import { getStagesByTheme } from '../utils/cultivation';
 
 // Snap Carousel Configuration (Dynamic - Responsive)
 const getCarouselConfig = (windowWidth) => {
@@ -134,17 +116,17 @@ const NavigationArrow = ({ direction, onPress, isDisabled }) => (
   </TouchableOpacity>
 );
 
-const BottomNavBar = ({ dimensions, copy }) => (
+const BottomNavBar = ({ dimensions, copy, onGoHome, onGoLeaderboard, onGoSettings }) => (
   <View style={[styles.bottomNav, { height: dimensions.height * 0.08 }]}>
-    <TouchableOpacity style={styles.navItem}>
+    <TouchableOpacity style={styles.navItem} onPress={onGoHome}>
       <MaterialIcons name="home" size={dimensions.width * 0.07} color={colors.gold} />
       <Text style={[styles.navLabel, { fontSize: dimensions.width * 0.03 }]}>{copy.tabHome}</Text>
     </TouchableOpacity>
-    <TouchableOpacity style={styles.navItem}>
+    <TouchableOpacity style={styles.navItem} onPress={onGoLeaderboard}>
       <MaterialIcons name="bar-chart" size={dimensions.width * 0.07} color={colors.grayText} />
       <Text style={[styles.navLabel, { fontSize: dimensions.width * 0.03, color: colors.grayText }]}>{copy.tabLeaderboard}</Text>
     </TouchableOpacity>
-    <TouchableOpacity style={styles.navItem}>
+    <TouchableOpacity style={styles.navItem} onPress={onGoSettings}>
       <MaterialIcons name="settings" size={dimensions.width * 0.07} color={colors.grayText} />
       <Text style={[styles.navLabel, { fontSize: dimensions.width * 0.03, color: colors.grayText }]}>{copy.tabSettings}</Text>
     </TouchableOpacity>
@@ -154,7 +136,8 @@ const BottomNavBar = ({ dimensions, copy }) => (
 export default function OnboardingScreen() {
   const dimensions = useWindowDimensions();
   const { navigate } = useNavigation();
-  const { copy } = useAppSettings();
+  const { copy, themeKey } = useAppSettings();
+  const CULTIVATION_STAGES = getStagesByTheme(themeKey);
   const [selectedIndex, setSelectedIndex] = useState(9);
   
   // Get responsive carousel config
@@ -221,6 +204,10 @@ export default function OnboardingScreen() {
     }
   };
 
+  const handleGoHome = () => navigate('MainTabs', { screen: 'HomeTab' });
+  const handleGoLeaderboard = () => navigate('MainTabs', { screen: 'LeaderboardTab' });
+  const handleGoSettings = () => navigate('MainTabs', { screen: 'SettingsTab' });
+
   const renderCultivationStage = ({ item, index }) => (
     <CultivationCard
       days={item.days}
@@ -240,10 +227,10 @@ export default function OnboardingScreen() {
       
       {/* Header Bar - Thanh DEV */}
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { fontSize: dimensions.width * 0.04 }]}>[DỊCH CHUYỂN THỜI GIAN]</Text>
+        <Text style={[styles.headerTitle, { fontSize: dimensions.width * 0.04 }]}>{copy.homeHeaderLabel}</Text>
         <View style={styles.headerTabs}>
-          <Text style={[styles.headerTab, { fontSize: dimensions.width * 0.032 }]}>TUA 1 NGÀY</Text>
-          <Text style={[styles.headerTab, { fontSize: dimensions.width * 0.032 }]}>TUA 8 NGÀY</Text>
+          <Text style={[styles.headerTab, { fontSize: dimensions.width * 0.032 }]}>{copy.onboardingHeaderFast1}</Text>
+          <Text style={[styles.headerTab, { fontSize: dimensions.width * 0.032 }]}>{copy.onboardingHeaderFast8}</Text>
         </View>
       </View>
 
@@ -333,14 +320,20 @@ export default function OnboardingScreen() {
           {/* Section 5: Warning Text */}
           <View style={styles.section}>
             <Text style={[styles.warningText, { lineHeight: dimensions.width * 0.046 }]}> 
-              Bút sa gà chết. Một khi đã chọn con đường này, nếu tâm ma trỗi dậy làm loạn, vạn kiếp bất phục.
+              {copy.onboardingWarning}
             </Text>
           </View>
         </View>
       </View>
 
       {/* Bottom Navigation */}
-      <BottomNavBar dimensions={dimensions} copy={copy} />
+      <BottomNavBar
+        dimensions={dimensions}
+        copy={copy}
+        onGoHome={handleGoHome}
+        onGoLeaderboard={handleGoLeaderboard}
+        onGoSettings={handleGoSettings}
+      />
     </SafeAreaView>
   );
 }
